@@ -16,6 +16,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Producer() {
@@ -63,6 +64,13 @@ func Producer() {
 			zap.S().Infow("Tweet has existed.", "URL", url)
 		}
 	}
+
+	// update status check
+	kv := orm.KV{
+		Key:   "ProducerLastRun",
+		Value: time.Now().Format("2006-01-02 15:04:05"),
+	}
+	db.Save(&kv)
 }
 
 func Consumer(bot *tgbotapi.BotAPI) {
@@ -137,4 +145,11 @@ func Consumer(bot *tgbotapi.BotAPI) {
 			zap.S().Error(res.Error.Error())
 		}
 	}
+
+	// update status check
+	kv := orm.KV{
+		Key:   "ConsumerLastRun",
+		Value: time.Now().Format("2006-01-02 15:04:05"),
+	}
+	db.Save(&kv)
 }

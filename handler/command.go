@@ -156,7 +156,24 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		db.Order("created_at desc").First(&lastRelpyUpdatedByProducer)
 		db.Order("updated_at desc").First(&lastRelpyUpdatedByConsumer)
 
-		msg.Text = fmt.Sprintf("Producer last updated at %v\nConsumer last updated at %v", lastRelpyUpdatedByProducer.CreatedAt, lastRelpyUpdatedByConsumer.UpdatedAt)
+		var kv orm.KV
+		db.Where(&orm.KV{Key: "ProducerLastRun"}).First(&kv)
+		producerLastRun := kv.Value
+
+		var kv2 orm.KV
+		// why kv2?
+		// If the object’s primary key has been set, then condition query wouldn’t cover the value of primary key
+		// but use it as a ‘and’ condition.
+		// see: https://gorm.io/docs/query.html
+		db.Where(&orm.KV{Key: "ConsumerLastRun"}).First(&kv2)
+		consumerLastRun := kv2.Value
+
+		msg.Text = fmt.Sprintf("🕔Producer:\n	run@ %s\n	update@ %s\n 🕔Consumer:\n	run@ %s\n	update@ %s",
+			producerLastRun,
+			lastRelpyUpdatedByProducer.CreatedAt.Format("2006-01-02 15:04:05"),
+			consumerLastRun,
+			lastRelpyUpdatedByConsumer.UpdatedAt.Format("2006-01-02 15:04:05"),
+		)
 		_, err := bot.Send(msg)
 		if err != nil {
 			log.Println(err)
