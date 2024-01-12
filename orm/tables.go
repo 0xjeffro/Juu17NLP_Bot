@@ -13,20 +13,21 @@ type Replies struct {
 
 	PositiveProb float64
 	NegativeProb float64
-	CreateAt     time.Time `gorm:"autoCreateTime"`
+	CreatedAt    time.Time `gorm:"autoCreateTime, index"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime, index"`
 }
 
 type Users struct {
-	ChatID   int64 `gorm:"index"`
-	UserName string
-	CreateAt time.Time `gorm:"autoCreateTime"`
+	ChatID    int64 `gorm:"index"`
+	UserName  string
+	CreatedAt time.Time `gorm:"autoCreateTime"`
 }
 
 type Rules struct {
-	ID       int       `gorm:"primaryKey"`
-	Type     string    `gorm:"index"`
-	Content  string    `gorm:"index"`
-	CreateAt time.Time `gorm:"autoCreateTime"`
+	ID        int       `gorm:"primaryKey"`
+	Type      string    `gorm:"index"`
+	Content   string    `gorm:"index"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
 }
 
 type KV struct {

@@ -12,6 +12,19 @@ import (
 	"time"
 )
 
+func checkPermission(username string) bool {
+	db := orm.GetConn()
+	var user orm.Users
+	res := db.Where(&orm.Users{
+		UserName: username,
+	}).First(&user)
+	if res.Error != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
 func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	cmd := update.Message.Command()
 	zap.S().Info("Receive Command: \\" + cmd + ".")
@@ -54,6 +67,14 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		}
 
 	case "a":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
 		msgText := update.Message.CommandArguments()
 
 		var rule orm.Rules
@@ -85,6 +106,14 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			}
 		}
 	case "d":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
 		msgText := update.Message.CommandArguments()
 		var rule orm.Rules
 
@@ -109,6 +138,28 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			if err != nil {
 				log.Println(err)
 			}
+		}
+	case "ping":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db := orm.GetConn()
+
+		var lastRelpyUpdatedByProducer orm.Replies
+		var lastRelpyUpdatedByConsumer orm.Replies
+
+		db.Order("created_at desc").First(&lastRelpyUpdatedByProducer)
+		db.Order("updated_at desc").First(&lastRelpyUpdatedByConsumer)
+
+		msg.Text = fmt.Sprintf("Producer last updated at %v\nConsumer last updated at %v", lastRelpyUpdatedByProducer.CreatedAt, lastRelpyUpdatedByConsumer.UpdatedAt)
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err)
 		}
 	}
 }
