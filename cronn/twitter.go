@@ -66,9 +66,10 @@ func Producer() {
 	}
 
 	// update status check
+	var cstZone = time.FixedZone("CST", 8*3600)
 	kv := orm.KV{
 		Key:   "ProducerLastRun",
-		Value: time.Now().Format("2006-01-02 15:04:05"),
+		Value: time.Now().In(cstZone).Format("2006-01-02 15:04:05"),
 	}
 	db.Save(&kv)
 }
@@ -147,9 +148,10 @@ func Consumer(bot *tgbotapi.BotAPI) {
 	}
 
 	// update status check
+	var cstZone = time.FixedZone("CST", 8*3600)
 	kv := orm.KV{
 		Key:   "ConsumerLastRun",
-		Value: time.Now().Format("2006-01-02 15:04:05"),
+		Value: time.Now().In(cstZone).Format("2006-01-02 15:04:05"),
 	}
 	db.Save(&kv)
 }
