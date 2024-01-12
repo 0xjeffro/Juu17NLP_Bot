@@ -37,7 +37,7 @@ func Producer() {
 	db := orm.GetConn()
 	for tweet := range scraper.SearchTweets(context.Background(), "(to:0xjuu_17)", 50) {
 		if tweet.Error != nil {
-			panic(tweet.Error)
+			fmt.Println(err.Error())
 		}
 
 		replyID := tweet.ID
@@ -77,6 +77,15 @@ func Consumer(bot *tgbotapi.BotAPI) {
 
 	for _, reply := range replies {
 		if reply.Author == "0xjuu_17" {
+			res := db.Model(&orm.Replies{}).Where(orm.Replies{ReplyID: reply.ReplyID}).
+				Updates(orm.Replies{
+					Visited:      true,
+					PositiveProb: 0,
+					NegativeProb: 0,
+				})
+			if res.Error != nil {
+				zap.S().Error(res.Error.Error())
+			}
 			continue
 		}
 
@@ -118,7 +127,6 @@ func Consumer(bot *tgbotapi.BotAPI) {
 		}
 
 		// Update
-		reply.Visited = true
 		res := db.Model(&orm.Replies{}).Where(orm.Replies{ReplyID: reply.ReplyID}).
 			Updates(orm.Replies{
 				Visited:      true,
