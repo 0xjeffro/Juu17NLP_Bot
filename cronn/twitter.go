@@ -76,12 +76,10 @@ func Producer() {
 
 func Consumer(bot *tgbotapi.BotAPI) {
 	var users []orm.Users
-	var rules []orm.Rules
 	var replies []orm.Replies
 	zap.S().Infof("Consumer running...")
 	db := orm.GetConn()
 	db.Limit(20).Find(&users)
-	db.Limit(300).Where(&orm.Rules{Type: "keyword"}).Find(&rules)
 	db.Limit(30).Where("visited = ?", false).Find(&replies)
 
 	for _, reply := range replies {
@@ -99,14 +97,10 @@ func Consumer(bot *tgbotapi.BotAPI) {
 		}
 
 		// Check if the reply contains keywords
-		keywords := make([]string, 0)
-		for _, rule := range rules {
-			text := reply.Text
-			keyword := rule.Content
-			if strings.Contains(text, keyword) {
-				keywords = append(keywords, keyword)
-			}
-		}
+		keywords := utils.KeywordsAnalysis(reply.Text)
+
+		// Check if the reply match regular expressions
+		regex := utils.RegularExpressionAnalysis(reply.Text)
 
 		// Sentiment analysis
 		data := utils.SentimentAnalysis(reply.Text)
@@ -118,6 +112,11 @@ func Consumer(bot *tgbotapi.BotAPI) {
 		if len(keywords) > 0 {
 			keywordsStr := strings.Join(keywords, ",")
 			message += fmt.Sprintf("⚠️%s\n", keywordsStr)
+		}
+
+		if len(regex) > 0 {
+			regexStr := strings.Join(regex, ",")
+			message += fmt.Sprintf("📜%s\n", regexStr)
 		}
 
 		if negativeProb > 0.6 {
