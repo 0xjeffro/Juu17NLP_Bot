@@ -144,7 +144,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 				log.Println(err)
 			}
 		}
-	case "delete_keyword":
+	case "del_keyword":
 		if checkPermission(update.Message.From.UserName) == false {
 			msg.Text = fmt.Sprintf("无权限")
 			_, err := bot.Send(msg)
@@ -154,7 +154,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			return
 		}
 		msgText := update.Message.CommandArguments()
-		targeId, err := strconv.Atoi(msgText)
+		targetId, err := strconv.Atoi(msgText)
 		if err != nil {
 			msg.Text = fmt.Sprintf("Error: 请输入要删除的关键词id")
 			_, err := bot.Send(msg)
@@ -166,7 +166,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		db := orm.GetConn()
 		var rule []orm.Rules
 		db.Limit(300).Where(&orm.Rules{Type: "keyword"}).Find(&rule)
-		if targeId > len(rule) {
+		if targetId > len(rule) {
 			msg.Text = fmt.Sprintf("Error: 请输入正确的id")
 			_, err := bot.Send(msg)
 			if err != nil {
@@ -174,13 +174,13 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			}
 			return
 		}
-		db.Delete(&rule[targeId-1])
+		db.Delete(&rule[targetId-1])
 		msg.Text = fmt.Sprintf("关键词已删除")
 		_, err = bot.Send(msg)
 		if err != nil {
 			log.Println(err)
 		}
-	case "delete_regex":
+	case "del_regex":
 		if checkPermission(update.Message.From.UserName) == false {
 			msg.Text = fmt.Sprintf("无权限")
 			_, err := bot.Send(msg)
@@ -190,7 +190,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			return
 		}
 		msgText := update.Message.CommandArguments()
-		targeId, err := strconv.Atoi(msgText)
+		targetId, err := strconv.Atoi(msgText)
 		if err != nil {
 			msg.Text = fmt.Sprintf("Error: 请输入要删除的正则id")
 			_, err := bot.Send(msg)
@@ -202,7 +202,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		db := orm.GetConn()
 		var rule []orm.Rules
 		db.Limit(300).Where(&orm.Rules{Type: "regex"}).Find(&rule)
-		if targeId > len(rule) {
+		if targetId > len(rule) {
 			msg.Text = fmt.Sprintf("Error: 请输入正确的id")
 			_, err := bot.Send(msg)
 			if err != nil {
@@ -210,7 +210,7 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 			}
 			return
 		}
-		db.Delete(&rule[targeId-1])
+		db.Delete(&rule[targetId-1])
 		msg.Text = fmt.Sprintf("正则已删除")
 		_, err = bot.Send(msg)
 		if err != nil {
