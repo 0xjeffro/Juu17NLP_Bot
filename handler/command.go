@@ -2,6 +2,7 @@ package handler
 
 import (
 	"Juu17NLP_Bot/orm"
+	"Juu17NLP_Bot/utils"
 	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -9,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -92,20 +94,20 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 					Type:    "keyword",
 				}
 				db.Create(&rule)
-				msg.Text = fmt.Sprintf("规则已添加")
+				msg.Text = fmt.Sprintf("关键词已添加")
 				_, err := bot.Send(msg)
 				if err != nil {
 					log.Println(err)
 				}
 			}
 		} else {
-			msg.Text = fmt.Sprintf("规则已存在")
+			msg.Text = fmt.Sprintf("关键词已存在")
 			_, err := bot.Send(msg)
 			if err != nil {
 				log.Println(err)
 			}
 		}
-	case "d":
+	case "ar":
 		if checkPermission(update.Message.From.UserName) == false {
 			msg.Text = fmt.Sprintf("无权限")
 			_, err := bot.Send(msg)
@@ -120,25 +122,152 @@ func CommandHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		db := orm.GetConn()
 		res := db.Where(&orm.Rules{
 			Content: msgText,
-			Type:    "keyword",
+			Type:    "regex",
 		}).First(&rule)
-
 		if res.Error != nil {
 			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-				msg.Text = fmt.Sprintf("该规则不存在")
+				rule = orm.Rules{
+					Content: msgText,
+					Type:    "regex",
+				}
+				db.Create(&rule)
+				msg.Text = fmt.Sprintf("正则已添加")
 				_, err := bot.Send(msg)
 				if err != nil {
 					log.Println(err)
 				}
 			}
 		} else {
-			db.Delete(&rule)
-			msg.Text = fmt.Sprintf("规则已删除")
+			msg.Text = fmt.Sprintf("正则已存在")
 			_, err := bot.Send(msg)
 			if err != nil {
 				log.Println(err)
 			}
 		}
+	case "delete_keyword":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		msgText := update.Message.CommandArguments()
+		targeId, err := strconv.Atoi(msgText)
+		if err != nil {
+			msg.Text = fmt.Sprintf("Error: 请输入要删除的关键词id")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db := orm.GetConn()
+		var rule []orm.Rules
+		db.Limit(300).Where(&orm.Rules{Type: "keyword"}).Find(&rule)
+		if targeId > len(rule) {
+			msg.Text = fmt.Sprintf("Error: 请输入正确的id")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db.Delete(&rule[targeId-1])
+		msg.Text = fmt.Sprintf("关键词已删除")
+		_, err = bot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+	case "delete_regex":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		msgText := update.Message.CommandArguments()
+		targeId, err := strconv.Atoi(msgText)
+		if err != nil {
+			msg.Text = fmt.Sprintf("Error: 请输入要删除的正则id")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db := orm.GetConn()
+		var rule []orm.Rules
+		db.Limit(300).Where(&orm.Rules{Type: "regex"}).Find(&rule)
+		if targeId > len(rule) {
+			msg.Text = fmt.Sprintf("Error: 请输入正确的id")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db.Delete(&rule[targeId-1])
+		msg.Text = fmt.Sprintf("正则已删除")
+		_, err = bot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+	case "list_keywords":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db := orm.GetConn()
+		var rules []orm.Rules
+		db.Limit(300).Where(&orm.Rules{Type: "keyword"}).Find(&rules)
+		keywords := ""
+		for idx, rule := range rules {
+			keywords += fmt.Sprintf("%d. %s\n", idx+1, rule.Content)
+		}
+		msg.Text = fmt.Sprintf("所有关键词：\n" + keywords)
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+	case "list_regex":
+		if checkPermission(update.Message.From.UserName) == false {
+			msg.Text = fmt.Sprintf("无权限")
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+		db := orm.GetConn()
+		var rules []orm.Rules
+		db.Limit(300).Where(&orm.Rules{Type: "regex"}).Find(&rules)
+		regex := ""
+		for idx, rule := range rules {
+			regex += fmt.Sprintf("%d. %s\n", idx+1, rule.Content)
+		}
+		msg.Text = fmt.Sprintf("所有正则：\n" + regex)
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+	case "test":
+		msgText := update.Message.CommandArguments()
+		keyword := utils.KeywordsAnalysis(msgText)
+		regex := utils.RegularExpressionAnalysis(msgText)
+		msg.Text = fmt.Sprintf("关键词：%s\n正则：%s", keyword, regex)
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+
 	case "ping":
 		if checkPermission(update.Message.From.UserName) == false {
 			msg.Text = fmt.Sprintf("无权限")
