@@ -48,7 +48,7 @@ func main() {
 	bot = utils.InitBot(token, webhook+"/"+webhookSuffix, debug)
 
 	producer := cron.New(cron.WithSeconds())
-	_, err := producer.AddFunc("@every 120s", func() {
+	_, err := producer.AddFunc("@every 360s", func() {
 		cronn.Producer()
 	})
 	if err != nil {
@@ -57,7 +57,7 @@ func main() {
 	producer.Start()
 
 	consumer := cron.New(cron.WithSeconds())
-	_, err = consumer.AddFunc("@every 60s", func() {
+	_, err = consumer.AddFunc("@every 180s", func() {
 		cronn.Consumer(bot)
 	})
 	if err != nil {
